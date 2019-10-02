@@ -1,0 +1,26 @@
+#! /bin/sh -e
+
+target_dir=$1
+if test -z "$1"; then
+    echo "usage: onvif-wsdl2h target_dir"
+    exit 1
+fi
+
+cd $target_dir
+if ! test -f typemap.dat; then
+    echo "expected typemap.dat to be present in $PWD"
+    exit 1
+fi
+
+wsdl2h -O4 -P -x -o onvif.h \
+  http://www.onvif.org/onvif/ver10/device/wsdl/devicemgmt.wsdl \
+  http://www.onvif.org/onvif/ver10/events/wsdl/event.wsdl \
+  http://www.onvif.org/onvif/ver10/deviceio.wsdl \
+  http://www.onvif.org/onvif/ver20/imaging/wsdl/imaging.wsdl \
+  http://www.onvif.org/onvif/ver10/media/wsdl/media.wsdl \
+  http://www.onvif.org/onvif/ver20/ptz/wsdl/ptz.wsdl \
+  http://www.onvif.org/onvif/ver10/network/wsdl/remotediscovery.wsdl \
+  http://www.onvif.org/ver10/advancedsecurity/wsdl/advancedsecurity.wsdl
+
+sed -i 's/wsdd10/wsdd5/' onvif.h
+echo "#import \"wsse.h\"" >> onvif.h

@@ -1,6 +1,6 @@
 <package>
   <description brief="Package to read and set parameters to the IP camera compatible with ONVIF-S.">
-  This package uses gSOAP, which needs to be locally compiled. It uses wsdl to generate cpp codes that permits me to deal with the camera.
+
   </description>
   <author>Henrique Ferreira Junior/henrique.ferreira@tidewise.io</author>
   <license></license>
@@ -14,7 +14,7 @@
   <depend package="dummy-dependency-n-1" />
   <depend package="dummy-dependency-n" />
   -->
-  <depend package="lcrypto" />
+  <!-- <depend package="lcrypto" />
   <depend package="lssl" />
-  <depend package="lz" />
+  <depend package="lz" /> -->
 </package>

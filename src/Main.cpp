@@ -1,4 +1,5 @@
 #include "onvif/soapDeviceBindingProxy.h"
+#include "onvif/soapImagingBindingProxy.h"
 #include "onvif/soapMediaBindingProxy.h"
 #include "onvif/soapPTZBindingProxy.h"
 #include "onvif/soapPullPointSubscriptionBindingProxy.h"
@@ -35,41 +36,83 @@ void set_credentials(struct soap *soap)
 
 int main()
 {
-  // make OpenSSL MT-safe with mutex
-  CRYPTO_thread_setup();
+    // make OpenSSL MT-safe with mutex
+    CRYPTO_thread_setup();
 
-  // create a context with strict XML validation and exclusive XML canonicalization for WS-Security enabled
-  struct soap *soap = soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL);
-  soap->connect_timeout = soap->recv_timeout = soap->send_timeout = 10; // 10 sec
-  soap_register_plugin(soap, soap_wsse);
+    // create a context with strict XML validation and exclusive XML canonicalization for WS-Security enabled
+    struct soap *soap = soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL);
+    soap->connect_timeout = soap->recv_timeout = soap->send_timeout = 10; // 10 sec
+    soap_register_plugin(soap, soap_wsse);
 
-  // create the proxies to access the ONVIF service API at HOSTNAME
-  DeviceBindingProxy proxyDevice(soap);
+    // create the proxies to access the ONVIF service API at HOSTNAME
+    DeviceBindingProxy proxyDevice(soap);
 
-  // get device info and print
-  proxyDevice.soap_endpoint = HOSTNAME;
-  _tds__GetDeviceInformation GetDeviceInformation;
-  _tds__GetDeviceInformationResponse GetDeviceInformationResponse;
-  set_credentials(soap);
-  if (proxyDevice.GetDeviceInformation(&GetDeviceInformation, GetDeviceInformationResponse))
-    report_error(soap);
-  std::cout << "Manufacturer:    " << GetDeviceInformationResponse.Manufacturer << std::endl;
-  std::cout << "Model:           " << GetDeviceInformationResponse.Model << std::endl;
-  std::cout << "FirmwareVersion: " << GetDeviceInformationResponse.FirmwareVersion << std::endl;
-  std::cout << "SerialNumber:    " << GetDeviceInformationResponse.SerialNumber << std::endl;
-  std::cout << "HardwareId:      " << GetDeviceInformationResponse.HardwareId << std::endl;
+    // get device info and print
+    proxyDevice.soap_endpoint = HOSTNAME;
+    _tds__GetDeviceInformation GetDeviceInformation;
+    _tds__GetDeviceInformationResponse GetDeviceInformationResponse;
+    set_credentials(soap);
+    if (proxyDevice.GetDeviceInformation(&GetDeviceInformation, GetDeviceInformationResponse))
+        report_error(soap);
+    std::cout << "\n------------- Camera Information -------------" << std::endl;
+    std::cout << "Manufacturer:    " << GetDeviceInformationResponse.Manufacturer << std::endl;
+    std::cout << "Model:           " << GetDeviceInformationResponse.Model << std::endl;
+    std::cout << "FirmwareVersion: " << GetDeviceInformationResponse.FirmwareVersion << std::endl;
+    std::cout << "SerialNumber:    " << GetDeviceInformationResponse.SerialNumber << std::endl;
+    std::cout << "HardwareId:      " << GetDeviceInformationResponse.HardwareId << std::endl;
 
-  // free all deserialized and managed data, we can still reuse the context and proxies after this
-  soap_destroy(soap);
-  soap_end(soap);
 
-  // free the shared context, proxy classes must terminate as well after this
-  soap_free(soap);
+    MediaBindingProxy proxyMedia(soap);
+    proxyMedia.soap_endpoint = HOSTNAME;
 
-  // clean up OpenSSL mutex
-  CRYPTO_thread_cleanup();
+    _trt__GetVideoSources GetVideoSources;
+    _trt__GetVideoSourcesResponse GetVideoSourcesResponse;
+    set_credentials(soap);
+    if (proxyMedia.GetVideoSources(&GetVideoSources, GetVideoSourcesResponse))
+        report_error(soap);
 
-  return 0;
+
+    ImagingBindingProxy proxyImage(soap);
+    proxyImage.soap_endpoint = HOSTNAME;
+
+    _timg__GetServiceCapabilities GetServiceCapabilities;
+    _timg__GetServiceCapabilitiesResponse GetServiceCapabilitiesResponse;
+    set_credentials(soap);
+    if (proxyImage.GetServiceCapabilities(&GetServiceCapabilities, GetServiceCapabilitiesResponse))
+        report_error(soap);
+
+    std::cout << "\n------------- Image Capabilities -------------" << std::endl;
+    std::cout << "Image Stabilization: " << *GetServiceCapabilitiesResponse.Capabilities->ImageStabilization << std::endl;
+    std::cout << "Presets: " << *GetServiceCapabilitiesResponse.Capabilities->Presets << std::endl;
+
+    _timg__GetOptions GetOptions;
+    GetOptions.VideoSourceToken = GetVideoSourcesResponse.VideoSources[0]->token;
+    _timg__GetOptionsResponse GetOptionsResponse;
+    set_credentials(soap);
+    if (proxyImage.GetOptions(&GetOptions, GetOptionsResponse))
+        report_error(soap);
+
+
+    _timg__GetImagingSettings GetImagingSettings;
+    GetImagingSettings.VideoSourceToken = GetVideoSourcesResponse.VideoSources[0]->token;
+    _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
+    set_credentials(soap);
+    if (proxyImage.GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
+        report_error(soap);
+
+    std::cout << "\n----------- Finishing Program ----------" << std::endl;
+
+    // free all deserialized and managed data, we can still reuse the context and proxies after this
+    soap_destroy(soap);
+    soap_end(soap);
+
+    // free the shared context, proxy classes must terminate as well after this
+    soap_free(soap);
+
+    // clean up OpenSSL mutex
+    CRYPTO_thread_cleanup();
+
+    return 0;
 }
 
 /******************************************************************************\

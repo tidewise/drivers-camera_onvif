@@ -1,4 +1,8 @@
 #include "onvif/soapDeviceBindingProxy.h"
+#include "onvif/soapMediaBindingProxy.h"
+#include "onvif/soapPTZBindingProxy.h"
+#include "onvif/soapPullPointSubscriptionBindingProxy.h"
+#include "onvif/soapRemoteDiscoveryBindingProxy.h"
 #include <gsoap/plugin/wsseapi.h>
 
 #include <gsoap/plugin/wsddapi.h>
@@ -7,14 +11,7 @@
 #define USERNAME "admin"
 #define PASSWORD "camera01"
 #define HOSTNAME "http://10.20.0.188/onvif/device_service"
-// using http instead of https is not safe unless you secure message integrity with WS-Security by uncommenting:
-// #define PROTECT
 
-#ifdef PROTECT
-// define some global data that is set once, to keep this example simple
-EVP_PKEY *privk = NULL;
-X509 *cert = NULL;
-#endif
 
 int CRYPTO_thread_setup();
 void CRYPTO_thread_cleanup();
@@ -34,91 +31,6 @@ void set_credentials(struct soap *soap)
   if (soap_wsse_add_Timestamp(soap, "Time", 10)
    || soap_wsse_add_UsernameTokenDigest(soap, "Auth", USERNAME, PASSWORD))
     report_error(soap);
-#ifdef PROTECT
-  if (!privk)
-  {
-    FILE *fd = fopen("client.pem";
-    if (fd)
-    {
-      privk = PEM_read_PrivateKey(fd, NULL, NULL, (void*)"password");
-      fclose(fd);
-    }
-    if (!privk)
-    {
-      fprintf(stderr, "Could not read private key from client.pem\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-  if (!cert)
-  {
-    FILE *fd = fopen("clientcert.pem", "r");
-    if (fd)
-    {
-      cert = PEM_read_X509(fd, NULL, NULL, NULL);
-      fclose(fd);
-    }
-    if (!cert)
-    {
-      fprintf(stderr, "Could not read certificate from clientcert.pem\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-  if (soap_wsse_add_BinarySecurityTokenX509(soap, "X509Token", cert)
-   || soap_wsse_add_KeyInfo_SecurityTokenReferenceX509(soap, "#X509Token")
-   || soap_wsse_sign_body(soap, SOAP_SMD_SIGN_RSA_SHA256, rsa_privk, 0)
-   || soap_wsse_verify_auto(soap, SOAP_SMD_NONE, NULL, 0))
-    report_error(soap);
-#endif
-}
-
-// to check if an ONVIF service response was signed with WS-Security (when enabled)
-void check_response(struct soap *soap)
-{
-#ifdef PROTECT
-  // check if the server returned a signed message body, if not error
-  if (soap_wsse_verify_body(soap))
-    report_error(soap);
-  soap_wsse_delete_Security(soap);
-#endif
-}
-
-// to download a snapshot and save it locally in the current dir as image-1.jpg, image-2.jpg, image-3.jpg ...
-void save_snapshot(int i, const char *endpoint)
-{
-  char filename[32];
-  (SOAP_SNPRINTF_SAFE(filename, 32), "image-%d.jpg", i);
-  FILE *fd = fopen(filename, "wb");
-  if (!fd)
-  {
-    std::cerr << "Cannot open " << filename << " for writing" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // create a temporary context to retrieve the image with HTTP GET
-  struct soap *soap = soap_new();
-  soap->connect_timeout = soap->recv_timeout = soap->send_timeout = 10; // 10 sec
-
-  // HTTP GET and save image
-  if (soap_GET(soap, endpoint, NULL) || soap_begin_recv(soap))
-    report_error(soap);
-  std::cout << "Retrieving " << filename;
-  if (soap->http_content)
-    std::cout << " of type " << soap->http_content;
-  std::cout << " from " << endpoint << std::endl;
-
-  // this example stores the whole image in memory first, before saving it to the file
-  // better is to copy the source code of soap_http_get_body here and
-  // modify it to save data directly to the file.
-  size_t imagelen;
-  char *image = soap_get_http_body(soap, &imagelen); // NOTE: soap_http_get_body was renamed from soap_get_http_body in gSOAP 2.8.73
-  soap_end_recv(soap);
-  fwrite(image, 1, imagelen, fd);
-  fclose(fd);
-
-  //cleanup
-  soap_destroy(soap);
-  soap_end(soap);
-  soap_free(soap);
 }
 
 int main()
@@ -141,7 +53,6 @@ int main()
   set_credentials(soap);
   if (proxyDevice.GetDeviceInformation(&GetDeviceInformation, GetDeviceInformationResponse))
     report_error(soap);
-  check_response(soap);
   std::cout << "Manufacturer:    " << GetDeviceInformationResponse.Manufacturer << std::endl;
   std::cout << "Model:           " << GetDeviceInformationResponse.Model << std::endl;
   std::cout << "FirmwareVersion: " << GetDeviceInformationResponse.FirmwareVersion << std::endl;

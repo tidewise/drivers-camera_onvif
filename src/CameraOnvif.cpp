@@ -26,7 +26,6 @@ CameraOnvif::CameraOnvif(/* args */) {
     pass = "camera01";
     uri = "http://10.20.0.188/onvif/device_service";
 
-    // m_private->soap = &soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL);
     m_private = &defined;
     m_private->soap->connect_timeout = m_private->soap->recv_timeout = m_private->soap->send_timeout = 10;
     soap_register_plugin(m_private->soap, soap_wsse);
@@ -42,6 +41,13 @@ CameraOnvif::CameraOnvif(/* args */) {
 
     video_token = GetVideoSourcesResponse.VideoSources[0]->token;
 
+    _trt__GetVideoEncoderConfigurationOptions GetVideoEncoderConfigurationOptions;
+    _trt__GetVideoEncoderConfigurationOptionsResponse GetVideoEncoderConfigurationOptionsResponse;
+    setCredentials();
+    if (m_private->proxy_media->GetVideoEncoderConfigurationOptions(
+        &GetVideoEncoderConfigurationOptions, GetVideoEncoderConfigurationOptionsResponse))
+        reportError();
+
     m_private->proxy_image = new ImagingBindingProxy(m_private->soap);
     m_private->proxy_image->soap_endpoint = uri.c_str();
 
@@ -55,9 +61,11 @@ CameraOnvif::CameraOnvif(/* args */) {
     brightness[0] = GetOptionsResponse.ImagingOptions->Brightness->Min;
     brightness[1] = GetOptionsResponse.ImagingOptions->Brightness->Max;
     contrast[0] = GetOptionsResponse.ImagingOptions->Contrast->Min,
-    contrast[0] = GetOptionsResponse.ImagingOptions->Contrast->Max;
+    contrast[1] = GetOptionsResponse.ImagingOptions->Contrast->Max;
     color_saturation[0] = GetOptionsResponse.ImagingOptions->ColorSaturation->Min;
     color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
+
+
 }
 
 float CameraOnvif::readBrightness(){

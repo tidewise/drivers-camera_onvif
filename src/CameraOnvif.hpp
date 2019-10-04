@@ -33,9 +33,9 @@ namespace camera_onvif {
         float readColorSaturation();
         float readContrast();
 
-        void setBrighttness();
-        void setColorSaturation();
-        void setContrast();
+        void setBrightness(float percentage);
+        void setColorSaturation(float percentage);
+        void setContrast(float percentage);
     };
 }
 

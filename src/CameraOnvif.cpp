@@ -31,10 +31,6 @@ CameraOnvif::CameraOnvif(/* args */) {
     m_private->soap->connect_timeout = m_private->soap->recv_timeout = m_private->soap->send_timeout = 10;
     soap_register_plugin(m_private->soap, soap_wsse);
 
-
-
-
-
     m_private->proxy_media = new MediaBindingProxy(m_private->soap);
     m_private->proxy_media->soap_endpoint = uri.c_str();
 
@@ -92,16 +88,50 @@ float CameraOnvif::readContrast(){
     return *GetImagingSettingsResponse.ImagingSettings->Contrast;
 }
 
+void CameraOnvif::setBrightness(float percentage){
+    float new_brightness = (brightness[1] - brightness[0]) * percentage + brightness[0];
+    _timg__SetImagingSettings SetImagingSettings;
+    SetImagingSettings.VideoSourceToken = video_token;
+    SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
+    SetImagingSettings.ImagingSettings->Brightness = &new_brightness;
+    _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
+    setCredentials();
+    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
+        reportError();
+}
+
+void CameraOnvif::setColorSaturation(float percentage){
+    float new_color_saturation = (color_saturation[1] - color_saturation[0]) * percentage + color_saturation[0];
+    _timg__SetImagingSettings SetImagingSettings;
+    SetImagingSettings.VideoSourceToken = video_token;
+    SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
+    SetImagingSettings.ImagingSettings->ColorSaturation = &new_color_saturation;
+    _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
+    setCredentials();
+    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
+        reportError();
+}
+
+void CameraOnvif::setContrast(float percentage){
+    float new_contrast = (contrast[1] - contrast[0]) * percentage + contrast[0];
+    _timg__SetImagingSettings SetImagingSettings;
+    SetImagingSettings.VideoSourceToken = video_token;
+    SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
+    SetImagingSettings.ImagingSettings->Contrast = &new_contrast;
+    _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
+    setCredentials();
+    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
+        reportError();
+}
+
 // to report an error
-void CameraOnvif::reportError()
-{
+void CameraOnvif::reportError(){
   cerr << "Oops, something went wrong:" << endl;
   soap_stream_fault(m_private->soap, cerr);
   exit(EXIT_FAILURE);
 }
 
-void CameraOnvif::setCredentials()
-{
+void CameraOnvif::setCredentials(){
   soap_wsse_delete_Security(m_private->soap);
   if (soap_wsse_add_Timestamp(m_private->soap, "Time", 10)
    || soap_wsse_add_UsernameTokenDigest(m_private->soap, "Auth", user.c_str(), pass.c_str()))
@@ -135,6 +165,7 @@ CameraOnvif::~CameraOnvif() {
     // free the shared context, proxy classes must terminate as well after this
     soap_free(m_private->soap);
 }
+
 
 
 

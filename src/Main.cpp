@@ -4,7 +4,8 @@
 
 int main()
 {
-    camera_onvif::CameraOnvif camera = camera_onvif::CameraOnvif();
+    camera_onvif::CameraOnvif camera = camera_onvif::CameraOnvif(
+        "admin", "camera01", "10.20.0.188", 1920, 1080);
 
     // std::cout << camera.readBrightness() << std::endl;
     // std::cout << camera.readContrast() << std::endl;

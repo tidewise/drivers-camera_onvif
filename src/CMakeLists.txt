@@ -24,6 +24,11 @@ list(APPEND gsoap_GEN
      onvif/soapPullPointSubscriptionBindingProxy.cpp
      onvif/soapRemoteDiscoveryBindingProxy.cpp)
 
+rock_library(camera_onvif
+    SOURCES CameraOnvif.cpp ${gsoap_GEN} ${gsoap_PLUGINS_SOURCES}
+    HEADERS CameraOnvif.hpp
+    DEPS_PKGCONFIG gsoap gsoap++ gsoapssl libssl libcrypto)
+
 rock_executable(camera_onvif_bin Main.cpp CameraOnvif.cpp
     ${gsoap_GEN}
     ${gsoap_PLUGINS_SOURCES}

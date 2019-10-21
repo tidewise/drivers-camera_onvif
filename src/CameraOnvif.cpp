@@ -19,6 +19,7 @@ struct CameraOnvif::Private {
     struct soap *soap = soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL | SOAP_C_UTFSTRING);
     MediaBindingProxy *proxy_media;
     ImagingBindingProxy *proxy_image;
+    _trt__GetVideoEncoderConfigurationOptionsResponse *video_options;
 }defined;
 
 CameraOnvif::CameraOnvif(/* args */) {
@@ -26,6 +27,27 @@ CameraOnvif::CameraOnvif(/* args */) {
     pass = "camera01";
     uri = "http://10.20.0.188/onvif/device_service";
 
+    this->init();
+}
+
+CameraOnvif::CameraOnvif(string user, string pass, string ip){
+    this->user = user;
+    this->pass = pass;
+    this->uri = "http://" + ip + "/onvif/device_service";
+
+    this->init();
+}
+
+CameraOnvif::CameraOnvif(string user, string pass, string ip, int width, int height){
+    this->user = user;
+    this->pass = pass;
+    this->uri = "http://" + ip + "/onvif/device_service";
+
+    this->init();
+    this->setResolution(width, height);
+}
+
+void CameraOnvif::init(){
     m_private = &defined;
     m_private->soap->connect_timeout = m_private->soap->recv_timeout = m_private->soap->send_timeout = 10;
     soap_register_plugin(m_private->soap, soap_wsse);
@@ -41,12 +63,22 @@ CameraOnvif::CameraOnvif(/* args */) {
 
     video_token = GetVideoSourcesResponse.VideoSources[0]->token;
 
+    _trt__GetVideoSourceConfigurations GetVideoSourceConfigurations;
+    _trt__GetVideoSourceConfigurationsResponse GetVideoSourceConfigurationsResponse;
+    setCredentials();
+    if (m_private->proxy_media->GetVideoSourceConfigurations(
+        &GetVideoSourceConfigurations, GetVideoSourceConfigurationsResponse))
+        reportError();
+    video_conf_token = GetVideoSourceConfigurationsResponse.Configurations[0]->token;
+
     _trt__GetVideoEncoderConfigurationOptions GetVideoEncoderConfigurationOptions;
+    GetVideoEncoderConfigurationOptions.ConfigurationToken = &video_conf_token;
     _trt__GetVideoEncoderConfigurationOptionsResponse GetVideoEncoderConfigurationOptionsResponse;
     setCredentials();
     if (m_private->proxy_media->GetVideoEncoderConfigurationOptions(
         &GetVideoEncoderConfigurationOptions, GetVideoEncoderConfigurationOptionsResponse))
         reportError();
+    m_private->video_options = &GetVideoEncoderConfigurationOptionsResponse;
 
     m_private->proxy_image = new ImagingBindingProxy(m_private->soap);
     m_private->proxy_image->soap_endpoint = uri.c_str();
@@ -64,7 +96,6 @@ CameraOnvif::CameraOnvif(/* args */) {
     contrast[1] = GetOptionsResponse.ImagingOptions->Contrast->Max;
     color_saturation[0] = GetOptionsResponse.ImagingOptions->ColorSaturation->Min;
     color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
-
 
 }
 
@@ -130,6 +161,63 @@ void CameraOnvif::setContrast(float percentage){
     setCredentials();
     if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
         reportError();
+}
+
+void CameraOnvif::setResolution(int width, int height){
+    bool valid = true;
+    for (auto & e : m_private->video_options->Options->H264->ResolutionsAvailable){
+        if (e->Width == width && e->Height == height){
+            valid = true;
+        }
+    }
+
+    _trt__GetVideoEncoderConfiguration GetVideoEncoderConfiguration;
+    _trt__GetVideoEncoderConfigurationResponse GetVideoEncoderConfigurationResponse;
+    GetVideoEncoderConfiguration.ConfigurationToken = video_conf_token;
+
+    setCredentials();
+    if (m_private->proxy_media->GetVideoEncoderConfiguration(&GetVideoEncoderConfiguration,
+        GetVideoEncoderConfigurationResponse)){
+        reportError();
+    }
+
+    _trt__SetVideoEncoderConfiguration SetVideoEncoderConfiguration;
+    _trt__SetVideoEncoderConfigurationResponse SetVideoEncoderConfigurationResponse;
+    SetVideoEncoderConfiguration.Configuration =
+    GetVideoEncoderConfigurationResponse.Configuration;
+    // SetVideoEncoderConfiguration.Configuration->Encoding = tt__VideoEncoding__H264;
+    // SetVideoEncoderConfiguration.Configuration->Quality = 6;
+    // SetVideoEncoderConfiguration.Configuration->Multicast = new tt__MulticastConfiguration();
+    // SetVideoEncoderConfiguration.ForcePersistence = true;
+    // SetVideoEncoderConfiguration.Configuration->SessionTimeout = "10";
+    // SetVideoEncoderConfiguration.Configuration->H264 = new tt__H264Configuration();
+    // SetVideoEncoderConfiguration.soap = m_private->soap;
+    // SetVideoEncoderConfiguration.Configuration->H264->soap = m_private->soap;
+
+    // if (width == 1920 and height == 1080){
+    //     SetVideoEncoderConfiguration.Configuration->H264->H264Profile =
+    //     tt__H264Profile__High;
+    // }else if (width == 1280 and height == 960){
+    //     SetVideoEncoderConfiguration.Configuration->H264->H264Profile =
+    //     tt__H264Profile__Main;
+    // }else if (width == 1280 and height == 720){
+    //     SetVideoEncoderConfiguration.Configuration->H264->H264Profile =
+    //     tt__H264Profile__Baseline;
+    // }
+    if(!valid) {
+        cout <<"You are trying to set a video resolution that is not available!"
+        << endl;
+        exit(EXIT_FAILURE);
+    }
+    // SetVideoEncoderConfiguration.Configuration->Resolution = new tt__VideoResolution();
+    // SetVideoEncoderConfiguration.Configuration->Resolution->soap = m_private->soap;
+    SetVideoEncoderConfiguration.Configuration->Resolution->Width = width;
+    SetVideoEncoderConfiguration.Configuration->Resolution->Height = height;
+    setCredentials();
+    if (m_private->proxy_media->SetVideoEncoderConfiguration(&SetVideoEncoderConfiguration,
+        SetVideoEncoderConfigurationResponse)){
+        reportError();
+    }
 }
 
 // to report an error

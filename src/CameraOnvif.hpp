@@ -15,6 +15,7 @@ namespace camera_onvif {
         std::string pass;
         std::string uri;
         std::string video_token;
+        std::string video_conf_token;
 
         float brightness[2]; // [Min, Max]
         float color_saturation[2]; // [Min, Max]
@@ -22,9 +23,13 @@ namespace camera_onvif {
 
         void setCredentials();
         void reportError();
+        void init();
 
     public:
         CameraOnvif(/* args */);
+        CameraOnvif(std::string user, std::string pass, std::string ip);
+        CameraOnvif(std::string user, std::string pass, std::string ip,
+                    int width, int height);
         ~CameraOnvif();
 
         void printCameraInfo();
@@ -36,6 +41,7 @@ namespace camera_onvif {
         void setBrightness(float percentage);
         void setColorSaturation(float percentage);
         void setContrast(float percentage);
+        void setResolution(int width, int height);
     };
 }
 

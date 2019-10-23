@@ -185,32 +185,12 @@ void CameraOnvif::setResolution(int width, int height){
     _trt__SetVideoEncoderConfigurationResponse SetVideoEncoderConfigurationResponse;
     SetVideoEncoderConfiguration.Configuration =
     GetVideoEncoderConfigurationResponse.Configuration;
-    // SetVideoEncoderConfiguration.Configuration->Encoding = tt__VideoEncoding__H264;
-    // SetVideoEncoderConfiguration.Configuration->Quality = 6;
-    // SetVideoEncoderConfiguration.Configuration->Multicast = new tt__MulticastConfiguration();
-    // SetVideoEncoderConfiguration.ForcePersistence = true;
-    // SetVideoEncoderConfiguration.Configuration->SessionTimeout = "10";
-    // SetVideoEncoderConfiguration.Configuration->H264 = new tt__H264Configuration();
-    // SetVideoEncoderConfiguration.soap = m_private->soap;
-    // SetVideoEncoderConfiguration.Configuration->H264->soap = m_private->soap;
 
-    // if (width == 1920 and height == 1080){
-    //     SetVideoEncoderConfiguration.Configuration->H264->H264Profile =
-    //     tt__H264Profile__High;
-    // }else if (width == 1280 and height == 960){
-    //     SetVideoEncoderConfiguration.Configuration->H264->H264Profile =
-    //     tt__H264Profile__Main;
-    // }else if (width == 1280 and height == 720){
-    //     SetVideoEncoderConfiguration.Configuration->H264->H264Profile =
-    //     tt__H264Profile__Baseline;
-    // }
     if(!valid) {
         cout <<"You are trying to set a video resolution that is not available!"
         << endl;
         exit(EXIT_FAILURE);
     }
-    // SetVideoEncoderConfiguration.Configuration->Resolution = new tt__VideoResolution();
-    // SetVideoEncoderConfiguration.Configuration->Resolution->soap = m_private->soap;
     SetVideoEncoderConfiguration.Configuration->Resolution->Width = width;
     SetVideoEncoderConfiguration.Configuration->Resolution->Height = height;
     setCredentials();

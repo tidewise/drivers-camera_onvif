@@ -19,10 +19,24 @@ using namespace camera_onvif;
 
 struct CameraOnvif::Private {
     struct soap *soap = soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL | SOAP_C_UTFSTRING);
-    MediaBindingProxy *proxy_media;
-    ImagingBindingProxy *proxy_image;
-    _trt__GetVideoEncoderConfigurationOptionsResponse *video_options;
-}defined;
+    MediaBindingProxy *proxy_media = nullptr;
+    ImagingBindingProxy *proxy_image = nullptr;
+    _trt__GetVideoEncoderConfigurationOptionsResponse *video_options = nullptr;
+    Private() = default;
+    ~Private(){
+        // free all deserialized and managed data, we can still reuse the context and proxies after this
+        soap_destroy(soap);
+        soap_end(soap);
+
+        // free the shared context, proxy classes must terminate as well after this
+        soap_free(soap);
+
+        delete video_options;
+        delete proxy_image;
+        delete proxy_media;
+        delete soap;
+    }
+};
 
 CameraOnvif::CameraOnvif() : m_user("admin"), m_pass("camera01"),
                              m_uri("http://10.20.0.188/onvif/device_service") {
@@ -44,7 +58,7 @@ m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service") {
 }
 
 void CameraOnvif::init(){
-    m_private = &defined;
+    m_private = new Private();
     m_private->soap->connect_timeout = m_private->soap->recv_timeout =
                                                     m_private->soap->send_timeout = 10;
     soap_register_plugin(m_private->soap, soap_wsse);
@@ -134,6 +148,8 @@ void CameraOnvif::setBrightness(float percentage){
     setCredentials();
     if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
         reportError();
+
+    delete SetImagingSettings.ImagingSettings;
 }
 
 void CameraOnvif::setColorSaturation(float percentage){
@@ -146,6 +162,8 @@ void CameraOnvif::setColorSaturation(float percentage){
     setCredentials();
     if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
         reportError();
+
+    delete SetImagingSettings.ImagingSettings;
 }
 
 void CameraOnvif::setContrast(float percentage){
@@ -158,6 +176,8 @@ void CameraOnvif::setContrast(float percentage){
     setCredentials();
     if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
         reportError();
+
+    delete SetImagingSettings.ImagingSettings;
 }
 
 void CameraOnvif::setResolution(int width, int height){
@@ -230,12 +250,7 @@ void CameraOnvif::printCameraInfo(){
 }
 
 CameraOnvif::~CameraOnvif() {
-    // free all deserialized and managed data, we can still reuse the context and proxies after this
-    soap_destroy(m_private->soap);
-    soap_end(m_private->soap);
-
-    // free the shared context, proxy classes must terminate as well after this
-    soap_free(m_private->soap);
+    delete m_private;
 }
 
 

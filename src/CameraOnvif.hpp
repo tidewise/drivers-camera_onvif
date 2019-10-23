@@ -8,18 +8,19 @@ namespace camera_onvif {
      *
      */
     class CameraOnvif {
+        // The goal of Private is to avoid leaking the whole SOAP generated code
         struct Private;
         Private* m_private = nullptr;
 
-        std::string user;
-        std::string pass;
-        std::string uri;
-        std::string video_token;
-        std::string video_conf_token;
+        std::string m_user;
+        std::string m_pass;
+        std::string m_uri;
+        std::string m_video_token;
+        std::string m_video_conf_token;
 
-        float brightness[2]; // [Min, Max]
-        float color_saturation[2]; // [Min, Max]
-        float contrast[2]; // [Min, Max]
+        float m_brightness[2]; // [Min, Max]
+        float m_color_saturation[2]; // [Min, Max]
+        float m_contrast[2]; // [Min, Max]
 
         void setCredentials();
         void reportError();

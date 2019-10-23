@@ -25,25 +25,25 @@ struct CameraOnvif::Private {
 }defined;
 
 CameraOnvif::CameraOnvif(/* args */) {
-    user = "admin";
-    pass = "camera01";
-    uri = "http://10.20.0.188/onvif/device_service";
+    m_user = "admin";
+    m_pass = "camera01";
+    m_uri = "http://10.20.0.188/onvif/device_service";
 
     this->init();
 }
 
 CameraOnvif::CameraOnvif(string user, string pass, string ip){
-    this->user = user;
-    this->pass = pass;
-    this->uri = "http://" + ip + "/onvif/device_service";
+    this->m_user = user;
+    this->m_pass = pass;
+    this->m_uri = "http://" + ip + "/onvif/device_service";
 
     this->init();
 }
 
 CameraOnvif::CameraOnvif(string user, string pass, string ip, int width, int height){
-    this->user = user;
-    this->pass = pass;
-    this->uri = "http://" + ip + "/onvif/device_service";
+    this->m_user = user;
+    this->m_pass = pass;
+    this->m_uri = "http://" + ip + "/onvif/device_service";
 
     this->init();
     this->setResolution(width, height);
@@ -55,7 +55,7 @@ void CameraOnvif::init(){
     soap_register_plugin(m_private->soap, soap_wsse);
 
     m_private->proxy_media = new MediaBindingProxy(m_private->soap);
-    m_private->proxy_media->soap_endpoint = uri.c_str();
+    m_private->proxy_media->soap_endpoint = m_uri.c_str();
 
     _trt__GetVideoSources GetVideoSources;
     _trt__GetVideoSourcesResponse GetVideoSourcesResponse;
@@ -63,7 +63,7 @@ void CameraOnvif::init(){
     if (m_private->proxy_media->GetVideoSources(&GetVideoSources, GetVideoSourcesResponse))
         reportError();
 
-    video_token = GetVideoSourcesResponse.VideoSources[0]->token;
+    m_video_token = GetVideoSourcesResponse.VideoSources[0]->token;
 
     _trt__GetVideoSourceConfigurations GetVideoSourceConfigurations;
     _trt__GetVideoSourceConfigurationsResponse GetVideoSourceConfigurationsResponse;
@@ -71,10 +71,10 @@ void CameraOnvif::init(){
     if (m_private->proxy_media->GetVideoSourceConfigurations(
         &GetVideoSourceConfigurations, GetVideoSourceConfigurationsResponse))
         reportError();
-    video_conf_token = GetVideoSourceConfigurationsResponse.Configurations[0]->token;
+    m_video_conf_token = GetVideoSourceConfigurationsResponse.Configurations[0]->token;
 
     _trt__GetVideoEncoderConfigurationOptions GetVideoEncoderConfigurationOptions;
-    GetVideoEncoderConfigurationOptions.ConfigurationToken = &video_conf_token;
+    GetVideoEncoderConfigurationOptions.ConfigurationToken = &m_video_conf_token;
     _trt__GetVideoEncoderConfigurationOptionsResponse GetVideoEncoderConfigurationOptionsResponse;
     setCredentials();
     if (m_private->proxy_media->GetVideoEncoderConfigurationOptions(
@@ -83,27 +83,27 @@ void CameraOnvif::init(){
     m_private->video_options = &GetVideoEncoderConfigurationOptionsResponse;
 
     m_private->proxy_image = new ImagingBindingProxy(m_private->soap);
-    m_private->proxy_image->soap_endpoint = uri.c_str();
+    m_private->proxy_image->soap_endpoint = m_uri.c_str();
 
      _timg__GetOptions GetOptions;
-    GetOptions.VideoSourceToken = video_token;
+    GetOptions.VideoSourceToken = m_video_token;
     _timg__GetOptionsResponse GetOptionsResponse;
     setCredentials();
     if (m_private->proxy_image->GetOptions(&GetOptions, GetOptionsResponse))
         reportError();
 
-    brightness[0] = GetOptionsResponse.ImagingOptions->Brightness->Min;
-    brightness[1] = GetOptionsResponse.ImagingOptions->Brightness->Max;
-    contrast[0] = GetOptionsResponse.ImagingOptions->Contrast->Min,
-    contrast[1] = GetOptionsResponse.ImagingOptions->Contrast->Max;
-    color_saturation[0] = GetOptionsResponse.ImagingOptions->ColorSaturation->Min;
-    color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
+    m_brightness[0] = GetOptionsResponse.ImagingOptions->Brightness->Min;
+    m_brightness[1] = GetOptionsResponse.ImagingOptions->Brightness->Max;
+    m_contrast[0] = GetOptionsResponse.ImagingOptions->Contrast->Min,
+    m_contrast[1] = GetOptionsResponse.ImagingOptions->Contrast->Max;
+    m_color_saturation[0] = GetOptionsResponse.ImagingOptions->ColorSaturation->Min;
+    m_color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
 
 }
 
 float CameraOnvif::readBrightness(){
     _timg__GetImagingSettings GetImagingSettings;
-    GetImagingSettings.VideoSourceToken = video_token;
+    GetImagingSettings.VideoSourceToken = m_video_token;
     _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
     setCredentials();
     if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
@@ -112,7 +112,7 @@ float CameraOnvif::readBrightness(){
 }
 float CameraOnvif::readColorSaturation(){
     _timg__GetImagingSettings GetImagingSettings;
-    GetImagingSettings.VideoSourceToken = video_token;
+    GetImagingSettings.VideoSourceToken = m_video_token;
     _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
     setCredentials();
     if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
@@ -121,7 +121,7 @@ float CameraOnvif::readColorSaturation(){
 }
 float CameraOnvif::readContrast(){
     _timg__GetImagingSettings GetImagingSettings;
-    GetImagingSettings.VideoSourceToken = video_token;
+    GetImagingSettings.VideoSourceToken = m_video_token;
     _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
     setCredentials();
     if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
@@ -130,9 +130,9 @@ float CameraOnvif::readContrast(){
 }
 
 void CameraOnvif::setBrightness(float percentage){
-    float new_brightness = (brightness[1] - brightness[0]) * percentage + brightness[0];
+    float new_brightness = (m_brightness[1] - m_brightness[0]) * percentage + m_brightness[0];
     _timg__SetImagingSettings SetImagingSettings;
-    SetImagingSettings.VideoSourceToken = video_token;
+    SetImagingSettings.VideoSourceToken = m_video_token;
     SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
     SetImagingSettings.ImagingSettings->Brightness = &new_brightness;
     _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
@@ -142,9 +142,9 @@ void CameraOnvif::setBrightness(float percentage){
 }
 
 void CameraOnvif::setColorSaturation(float percentage){
-    float new_color_saturation = (color_saturation[1] - color_saturation[0]) * percentage + color_saturation[0];
+    float new_color_saturation = (m_color_saturation[1] - m_color_saturation[0]) * percentage + m_color_saturation[0];
     _timg__SetImagingSettings SetImagingSettings;
-    SetImagingSettings.VideoSourceToken = video_token;
+    SetImagingSettings.VideoSourceToken = m_video_token;
     SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
     SetImagingSettings.ImagingSettings->ColorSaturation = &new_color_saturation;
     _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
@@ -154,9 +154,9 @@ void CameraOnvif::setColorSaturation(float percentage){
 }
 
 void CameraOnvif::setContrast(float percentage){
-    float new_contrast = (contrast[1] - contrast[0]) * percentage + contrast[0];
+    float new_contrast = (m_contrast[1] - m_contrast[0]) * percentage + m_contrast[0];
     _timg__SetImagingSettings SetImagingSettings;
-    SetImagingSettings.VideoSourceToken = video_token;
+    SetImagingSettings.VideoSourceToken = m_video_token;
     SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
     SetImagingSettings.ImagingSettings->Contrast = &new_contrast;
     _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
@@ -178,7 +178,7 @@ void CameraOnvif::setResolution(int width, int height){
 
     _trt__GetVideoEncoderConfiguration GetVideoEncoderConfiguration;
     _trt__GetVideoEncoderConfigurationResponse GetVideoEncoderConfigurationResponse;
-    GetVideoEncoderConfiguration.ConfigurationToken = video_conf_token;
+    GetVideoEncoderConfiguration.ConfigurationToken = m_video_conf_token;
 
     setCredentials();
     if (m_private->proxy_media->GetVideoEncoderConfiguration(&GetVideoEncoderConfiguration,
@@ -211,7 +211,7 @@ void CameraOnvif::reportError(){
 void CameraOnvif::setCredentials(){
   soap_wsse_delete_Security(m_private->soap);
   if (soap_wsse_add_Timestamp(m_private->soap, "Time", 10)
-   || soap_wsse_add_UsernameTokenDigest(m_private->soap, "Auth", user.c_str(), pass.c_str()))
+   || soap_wsse_add_UsernameTokenDigest(m_private->soap, "Auth", m_user.c_str(), m_pass.c_str()))
     reportError();
 }
 
@@ -220,7 +220,7 @@ void CameraOnvif::printCameraInfo(){
     DeviceBindingProxy proxyDevice(m_private->soap);
 
     // get device info and print
-    proxyDevice.soap_endpoint = uri.c_str();
+    proxyDevice.soap_endpoint = m_uri.c_str();
     _tds__GetDeviceInformation GetDeviceInformation;
     _tds__GetDeviceInformationResponse GetDeviceInformationResponse;
     setCredentials();

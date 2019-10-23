@@ -166,11 +166,14 @@ void CameraOnvif::setContrast(float percentage){
 }
 
 void CameraOnvif::setResolution(int width, int height){
-    bool valid = true;
+    bool valid = false;
     for (auto & e : m_private->video_options->Options->H264->ResolutionsAvailable){
         if (e->Width == width && e->Height == height){
             valid = true;
         }
+    }
+    if(!valid) {
+        throw SOAPException("You are trying to set a video resolution that is not available!");
     }
 
     _trt__GetVideoEncoderConfiguration GetVideoEncoderConfiguration;
@@ -188,11 +191,6 @@ void CameraOnvif::setResolution(int width, int height){
     SetVideoEncoderConfiguration.Configuration =
     GetVideoEncoderConfigurationResponse.Configuration;
 
-    if(!valid) {
-        cout <<"You are trying to set a video resolution that is not available!"
-        << endl;
-        exit(EXIT_FAILURE);
-    }
     SetVideoEncoderConfiguration.Configuration->Resolution->Width = width;
     SetVideoEncoderConfiguration.Configuration->Resolution->Height = height;
     setCredentials();

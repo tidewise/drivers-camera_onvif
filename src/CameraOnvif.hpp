@@ -27,7 +27,7 @@ namespace camera_onvif {
         void init();
 
     public:
-        CameraOnvif(/* args */);
+        CameraOnvif();
         CameraOnvif(const std::string& user, const std::string& pass,
                     const std::string& ip);
         CameraOnvif(const std::string& user, const std::string& pass,

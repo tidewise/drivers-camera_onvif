@@ -1,4 +1,5 @@
 #include "CameraOnvif.hpp"
+#include "SOAPException.hpp"
 
 #include <gsoap/plugin/wsseapi.h>
 #include <gsoap/plugin/wsddapi.h>
@@ -11,6 +12,7 @@
 #include "wsdd.nsmap"
 
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 using namespace camera_onvif;
@@ -202,9 +204,10 @@ void CameraOnvif::setResolution(int width, int height){
 
 // to report an error
 void CameraOnvif::reportError(){
-  cerr << "Oops, something went wrong:" << endl;
-  soap_stream_fault(m_private->soap, cerr);
-  exit(EXIT_FAILURE);
+    std::ostringstream my_stream (std::ostringstream::ate);
+    my_stream << "Oops, something went wrong:" << endl;
+    soap_stream_fault(m_private->soap, my_stream);
+    throw SOAPException(my_stream.str());
 }
 
 void CameraOnvif::setCredentials(){

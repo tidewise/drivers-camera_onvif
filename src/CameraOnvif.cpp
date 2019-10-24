@@ -43,14 +43,6 @@ CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& i
     this->init();
 }
 
-CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& ip,
-                         int width, int height) :
-m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service") {
-
-    this->init();
-    this->setResolution(width, height);
-}
-
 void CameraOnvif::init(){
     m_private = new Private();
     m_private->soap->connect_timeout = m_private->soap->recv_timeout =

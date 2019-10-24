@@ -5,11 +5,9 @@
 int main()
 {
     camera_onvif::CameraOnvif camera = camera_onvif::CameraOnvif(
-        "admin", "camera01", "10.20.0.188", 1920, 1080);
+        "admin", "camera01", "10.20.0.188");
 
-    // std::cout << camera.readBrightness() << std::endl;
-    // std::cout << camera.readContrast() << std::endl;
-    // std::cout << camera.readColorSaturation() << std::endl;
+    camera.setResolution(1920, 1080);
 
     camera.setImageParam(0.1, 0.1, 0.1);
 

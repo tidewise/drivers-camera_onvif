@@ -57,8 +57,8 @@ namespace camera_onvif {
 
         void printCameraInfo();
 
-        // Set image parameters: Brightness, Color Saturation and Contrast.
-        void setImageParam (float bright, float saturation, float contrast);
+        // Set image parameters: Receives ImageParam struct as argument.
+        void setImageParam (const ImageParam& new_param);
         /*
          * Get image parameters: Returns a struct with brightness, color_saturation and
          * contrast float attributes.

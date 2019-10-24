@@ -9,15 +9,26 @@ int main()
 
     camera.setResolution(1920, 1080);
 
-    camera.setImageParam(0.1, 0.1, 0.1);
+    auto params = camera_onvif::ImageParam();
+
+    params.contrast = 0.1;
+    params.brightness = 0.1;
+    params.color_saturation = 0.1;
+    camera.setImageParam(params);
 
     sleep(3);
 
-    camera.setImageParam(0.9, 0.9, 0.9);
+    params.contrast = 0.9;
+    params.brightness = 0.9;
+    params.color_saturation = 0.9;
+    camera.setImageParam(params);
 
     sleep(3);
 
-    camera.setImageParam(0.5, 0.5, 0.5);
+    params.contrast = 0.5;
+    params.brightness = 0.5;
+    params.color_saturation = 0.5;
+    camera.setImageParam(params);
 
     return 0;
 }

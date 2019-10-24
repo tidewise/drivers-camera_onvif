@@ -112,11 +112,13 @@ ImageParam CameraOnvif::getImageParam(){
     return response;
 }
 
-void CameraOnvif::setImageParam(float bright, float saturation, float contrast){
-    float new_brightness = (m_brightness[1] - m_brightness[0]) * bright + m_brightness[0];
-    float new_color_saturation = (m_color_saturation[1] - m_color_saturation[0])
-                                 * saturation + m_color_saturation[0];
-    float new_contrast = (m_contrast[1] - m_contrast[0]) * contrast + m_contrast[0];
+void CameraOnvif::setImageParam(const ImageParam& new_param){
+    float new_brightness = (m_brightness[1] - m_brightness[0]) *
+                            new_param.brightness + m_brightness[0];
+    float new_color_saturation = (m_color_saturation[1] - m_color_saturation[0]) *
+                                  new_param.color_saturation + m_color_saturation[0];
+    float new_contrast = (m_contrast[1] - m_contrast[0]) *
+                          new_param.contrast + m_contrast[0];
 
     _timg__SetImagingSettings set_imaging;
     set_imaging.VideoSourceToken = m_video_token;

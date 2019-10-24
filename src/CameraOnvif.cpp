@@ -101,74 +101,39 @@ void CameraOnvif::init(){
     m_color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
 }
 
-float CameraOnvif::readBrightness(){
+ImageParam CameraOnvif::getImageParam(){
+    ImageParam response = ImageParam();
     _timg__GetImagingSettings GetImagingSettings;
     GetImagingSettings.VideoSourceToken = m_video_token;
     _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
     setCredentials();
     if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
         reportError();
-    return *GetImagingSettingsResponse.ImagingSettings->Brightness;
-}
-float CameraOnvif::readColorSaturation(){
-    _timg__GetImagingSettings GetImagingSettings;
-    GetImagingSettings.VideoSourceToken = m_video_token;
-    _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
-    setCredentials();
-    if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
-        reportError();
-    return *GetImagingSettingsResponse.ImagingSettings->ColorSaturation;
-}
-float CameraOnvif::readContrast(){
-    _timg__GetImagingSettings GetImagingSettings;
-    GetImagingSettings.VideoSourceToken = m_video_token;
-    _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
-    setCredentials();
-    if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse))
-        reportError();
-    return *GetImagingSettingsResponse.ImagingSettings->Contrast;
+
+    response.color_saturation = *GetImagingSettingsResponse.ImagingSettings->ColorSaturation;
+    response.brightness = *GetImagingSettingsResponse.ImagingSettings->Brightness;
+    response.contrast = *GetImagingSettingsResponse.ImagingSettings->Contrast;
+
+    return response;
 }
 
-void CameraOnvif::setBrightness(float percentage){
-    float new_brightness = (m_brightness[1] - m_brightness[0]) * percentage + m_brightness[0];
+void CameraOnvif::setImageParam(float bright, float saturation, float contrast){
+    float new_brightness = (m_brightness[1] - m_brightness[0]) * bright + m_brightness[0];
+    float new_color_saturation = (m_color_saturation[1] - m_color_saturation[0]) * saturation + m_color_saturation[0];
+    float new_contrast = (m_contrast[1] - m_contrast[0]) * contrast + m_contrast[0];
+
     _timg__SetImagingSettings SetImagingSettings;
     SetImagingSettings.VideoSourceToken = m_video_token;
     SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
     SetImagingSettings.ImagingSettings->Brightness = &new_brightness;
-    _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
-    setCredentials();
-    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
-        reportError();
-
-    delete SetImagingSettings.ImagingSettings;
-}
-
-void CameraOnvif::setColorSaturation(float percentage){
-    float new_color_saturation = (m_color_saturation[1] - m_color_saturation[0]) * percentage + m_color_saturation[0];
-    _timg__SetImagingSettings SetImagingSettings;
-    SetImagingSettings.VideoSourceToken = m_video_token;
-    SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
     SetImagingSettings.ImagingSettings->ColorSaturation = &new_color_saturation;
-    _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
-    setCredentials();
-    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
-        reportError();
-
-    delete SetImagingSettings.ImagingSettings;
-}
-
-void CameraOnvif::setContrast(float percentage){
-    float new_contrast = (m_contrast[1] - m_contrast[0]) * percentage + m_contrast[0];
-    _timg__SetImagingSettings SetImagingSettings;
-    SetImagingSettings.VideoSourceToken = m_video_token;
-    SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
     SetImagingSettings.ImagingSettings->Contrast = &new_contrast;
+
     _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
     setCredentials();
-    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse))
+    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse)) {
         reportError();
-
-    delete SetImagingSettings.ImagingSettings;
+    }
 }
 
 void CameraOnvif::setResolution(int width, int height){
@@ -257,11 +222,6 @@ void CameraOnvif::printCameraInfo(){
 CameraOnvif::~CameraOnvif() {
     delete m_private;
 }
-
-
-
-
-
 
 /******************************************************************************\
  *

@@ -13,6 +13,14 @@ namespace camera_onvif {
         ~Resolution() = default;
     };
 
+    struct ImageParam {
+        float contrast;
+        float color_saturation;
+        float brightness;
+        ImageParam() = default;
+        ~ImageParam() = default;
+    };
+
     /**
      * Class to handle the Onvif connection.
      */
@@ -49,15 +57,13 @@ namespace camera_onvif {
 
         void printCameraInfo();
 
-        float readBrightness();
-        float readColorSaturation();
-        float readContrast();
+        // Set image parameters: Brightness, Color Saturation and Contrast.
+        void setImageParam (float bright, float saturation, float contrast);
+        // Get image parameters: Returns a struct with brightness, color_saturation and contrast float attributes.
+        ImageParam getImageParam();
 
-        void setBrightness(float percentage);
-        void setColorSaturation(float percentage);
-        void setContrast(float percentage);
         void setResolution(int width, int height);
-
+        // Get resolution: Returns a struct with width and height integers attributes.
         Resolution getResolution();
     };
 }

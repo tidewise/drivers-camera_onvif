@@ -36,7 +36,6 @@ struct CameraOnvif::Private {
 
         delete proxy_image;
         delete proxy_media;
-        delete soap;
     }
 };
 
@@ -65,6 +64,7 @@ void CameraOnvif::init(){
 
     setCredentials();
     bool error1 = m_private->proxy_media->GetVideoSources(&get_video_src, get_video_src_resp);
+    setCredentials();
     bool error2 = m_private->proxy_media->GetVideoSourceConfigurations(&get_video_src_conf, get_video_src_conf_resp);
     if (error1 || error2){
         reportError();
@@ -82,6 +82,7 @@ void CameraOnvif::init(){
     setCredentials();
     bool error3 = m_private->proxy_media->GetVideoEncoderConfigurationOptions(
                             &get_video_enc_conf_opt, m_private->video_options);
+    setCredentials();
     bool error4 = m_private->proxy_image->GetOptions(&get_opt, get_opt_resp);
     if (error3 || error4){
         reportError();

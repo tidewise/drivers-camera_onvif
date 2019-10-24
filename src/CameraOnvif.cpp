@@ -212,7 +212,15 @@ void CameraOnvif::getVideoEncoderConfiguration(
     }
 }
 
-// to report an error
+camera_onvif::Resolution CameraOnvif::getResolution(){
+    _trt__GetVideoEncoderConfigurationResponse video_conf;
+    getVideoEncoderConfiguration(video_conf);
+    Resolution response = Resolution();
+    response.width = video_conf.Configuration->Resolution->Width;
+    response.height = video_conf.Configuration->Resolution->Height;
+    return response;
+}
+
 void CameraOnvif::reportError(){
     std::ostringstream my_stream (std::ostringstream::ate);
     my_stream << "Oops, something went wrong:" << endl;

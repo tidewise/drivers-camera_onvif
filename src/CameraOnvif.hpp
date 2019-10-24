@@ -6,8 +6,15 @@
 class _trt__GetVideoEncoderConfigurationResponse;
 
 namespace camera_onvif {
+    struct Resolution {
+        int width;
+        int height;
+        Resolution() = default;
+        ~Resolution() = default;
+    };
+
     /**
-     *
+     * Class to handle the Onvif connection.
      */
     class CameraOnvif {
         // The goal of Private is to avoid leaking the whole SOAP generated code
@@ -20,11 +27,15 @@ namespace camera_onvif {
         std::string m_video_token;
         std::string m_video_conf_token;
 
-        float m_brightness[2]; // [Min, Max]
-        float m_color_saturation[2]; // [Min, Max]
-        float m_contrast[2]; // [Min, Max]
+        // [Min, Max]
+        float m_brightness[2];
+        // [Min, Max]
+        float m_color_saturation[2];
+        // [Min, Max]
+        float m_contrast[2];
 
         void setCredentials();
+        // to report an error
         void reportError();
         void init();
         void getVideoEncoderConfiguration(_trt__GetVideoEncoderConfigurationResponse& resp);
@@ -46,6 +57,8 @@ namespace camera_onvif {
         void setColorSaturation(float percentage);
         void setContrast(float percentage);
         void setResolution(int width, int height);
+
+        Resolution getResolution();
     };
 }
 

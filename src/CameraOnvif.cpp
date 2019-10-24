@@ -38,11 +38,6 @@ struct CameraOnvif::Private {
     }
 };
 
-CameraOnvif::CameraOnvif() : m_user("admin"), m_pass("camera01"),
-                             m_uri("http://10.20.0.188/onvif/device_service") {
-    this->init();
-}
-
 CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& ip) :
  m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service") {
 
@@ -107,7 +102,6 @@ void CameraOnvif::init(){
     m_contrast[1] = GetOptionsResponse.ImagingOptions->Contrast->Max;
     m_color_saturation[0] = GetOptionsResponse.ImagingOptions->ColorSaturation->Min;
     m_color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
-
 }
 
 float CameraOnvif::readBrightness(){

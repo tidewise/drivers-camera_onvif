@@ -35,11 +35,13 @@ namespace camera_onvif {
         std::string m_video_token;
         std::string m_video_conf_token;
 
-        // [Min, Max]
+        int m_timeout;
+
+        //[Min, Max]
         float m_brightness[2];
-        // [Min, Max]
+        //[Min, Max]
         float m_color_saturation[2];
-        // [Min, Max]
+        //[Min, Max]
         float m_contrast[2];
 
         void setCredentials();
@@ -57,12 +59,20 @@ namespace camera_onvif {
 
         // Set image parameters: Brightness, Color Saturation and Contrast.
         void setImageParam (float bright, float saturation, float contrast);
-        // Get image parameters: Returns a struct with brightness, color_saturation and contrast float attributes.
+        /*
+         * Get image parameters: Returns a struct with brightness, color_saturation and
+         * contrast float attributes.
+         */
         ImageParam getImageParam();
 
         void setResolution(int width, int height);
         // Get resolution: Returns a struct with width and height integers attributes.
         Resolution getResolution();
+
+        // Get timeout: Returns an integer with the connection authentication timeout.
+        int getTimeout ();
+        // Set timeout: Set an integer with the connection authentication timeout.
+        void setTimeout (int timeout);
     };
 }
 

@@ -3,6 +3,8 @@
 
 #include <string>
 
+class _trt__GetVideoEncoderConfigurationResponse;
+
 namespace camera_onvif {
     /**
      *
@@ -25,6 +27,7 @@ namespace camera_onvif {
         void setCredentials();
         void reportError();
         void init();
+        void getVideoEncoderConfiguration(_trt__GetVideoEncoderConfigurationResponse& resp);
 
     public:
         CameraOnvif(const std::string& user, const std::string& pass,

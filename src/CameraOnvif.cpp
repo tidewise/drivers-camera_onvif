@@ -21,7 +21,7 @@ struct CameraOnvif::Private {
     struct soap *soap = soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL | SOAP_C_UTFSTRING);
     MediaBindingProxy *proxy_media = nullptr;
     ImagingBindingProxy *proxy_image = nullptr;
-    _trt__GetVideoEncoderConfigurationOptionsResponse *video_options = nullptr;
+    _trt__GetVideoEncoderConfigurationOptionsResponse video_options;
     Private() = default;
     ~Private(){
         // free all deserialized and managed data, we can still reuse the context and proxies after this
@@ -31,7 +31,6 @@ struct CameraOnvif::Private {
         // free the shared context, proxy classes must terminate as well after this
         soap_free(soap);
 
-        delete video_options;
         delete proxy_image;
         delete proxy_media;
         delete soap;
@@ -79,12 +78,10 @@ void CameraOnvif::init(){
 
     _trt__GetVideoEncoderConfigurationOptions GetVideoEncoderConfigurationOptions;
     GetVideoEncoderConfigurationOptions.ConfigurationToken = &m_video_conf_token;
-    _trt__GetVideoEncoderConfigurationOptionsResponse GetVideoEncoderConfigurationOptionsResponse;
     setCredentials();
     if (m_private->proxy_media->GetVideoEncoderConfigurationOptions(
-        &GetVideoEncoderConfigurationOptions, GetVideoEncoderConfigurationOptionsResponse))
+        &GetVideoEncoderConfigurationOptions, m_private->video_options))
         reportError();
-    m_private->video_options = &GetVideoEncoderConfigurationOptionsResponse;
 
     m_private->proxy_image = new ImagingBindingProxy(m_private->soap);
     m_private->proxy_image->soap_endpoint = m_uri.c_str();
@@ -176,35 +173,41 @@ void CameraOnvif::setContrast(float percentage){
 
 void CameraOnvif::setResolution(int width, int height){
     bool valid = false;
-    for (auto & e : m_private->video_options->Options->H264->ResolutionsAvailable){
-        if (e->Width == width && e->Height == height){
+    for (auto & e : m_private->video_options.Options->H264->ResolutionsAvailable) {
+        if (e->Width == width && e->Height == height) {
             valid = true;
         }
     }
-    if(!valid) {
+    if (!valid) {
         throw SOAPException("You are trying to set a video resolution that is not available!");
     }
 
+    _trt__GetVideoEncoderConfigurationResponse conf_get_response;
+    getVideoEncoderConfiguration(conf_get_response);
+
+    _trt__SetVideoEncoderConfiguration conf_set;
+    _trt__SetVideoEncoderConfigurationResponse conf_set_response;
+    conf_set.Configuration = conf_get_response.Configuration;
+
+    conf_set.Configuration->Resolution->Width = width;
+    conf_set.Configuration->Resolution->Height = height;
+    setCredentials();
+    if (m_private->proxy_media->SetVideoEncoderConfiguration(&conf_set,
+        conf_set_response)){
+        reportError();
+    }
+}
+
+void CameraOnvif::getVideoEncoderConfiguration(
+    _trt__GetVideoEncoderConfigurationResponse& resp
+) {
     _trt__GetVideoEncoderConfiguration GetVideoEncoderConfiguration;
-    _trt__GetVideoEncoderConfigurationResponse GetVideoEncoderConfigurationResponse;
     GetVideoEncoderConfiguration.ConfigurationToken = m_video_conf_token;
 
     setCredentials();
-    if (m_private->proxy_media->GetVideoEncoderConfiguration(&GetVideoEncoderConfiguration,
-        GetVideoEncoderConfigurationResponse)){
-        reportError();
-    }
-
-    _trt__SetVideoEncoderConfiguration SetVideoEncoderConfiguration;
-    _trt__SetVideoEncoderConfigurationResponse SetVideoEncoderConfigurationResponse;
-    SetVideoEncoderConfiguration.Configuration =
-    GetVideoEncoderConfigurationResponse.Configuration;
-
-    SetVideoEncoderConfiguration.Configuration->Resolution->Width = width;
-    SetVideoEncoderConfiguration.Configuration->Resolution->Height = height;
-    setCredentials();
-    if (m_private->proxy_media->SetVideoEncoderConfiguration(&SetVideoEncoderConfiguration,
-        SetVideoEncoderConfigurationResponse)){
+    bool error = m_private->proxy_media->GetVideoEncoderConfiguration(
+        &GetVideoEncoderConfiguration, resp);
+    if (error) {
         reportError();
     }
 }
@@ -218,10 +221,10 @@ void CameraOnvif::reportError(){
 }
 
 void CameraOnvif::setCredentials(){
-  soap_wsse_delete_Security(m_private->soap);
-  if (soap_wsse_add_Timestamp(m_private->soap, "Time", 10)
-   || soap_wsse_add_UsernameTokenDigest(m_private->soap, "Auth", m_user.c_str(), m_pass.c_str()))
-    reportError();
+    soap_wsse_delete_Security(m_private->soap);
+    if (soap_wsse_add_Timestamp(m_private->soap, "Time", 10)
+        || soap_wsse_add_UsernameTokenDigest(m_private->soap, "Auth", m_user.c_str(), m_pass.c_str()))
+        reportError();
 }
 
 void CameraOnvif::printCameraInfo(){

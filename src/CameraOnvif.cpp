@@ -48,67 +48,65 @@ CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& i
 
 void CameraOnvif::init(){
     m_private = new Private();
-    m_private->soap->connect_timeout = m_private->soap->recv_timeout =
-                                                    m_private->soap->send_timeout = 10;
+    m_private->soap->connect_timeout = m_timeout;
+    m_private->soap->recv_timeout = m_timeout;
+    m_private->soap->send_timeout = m_timeout;
     soap_register_plugin(m_private->soap, soap_wsse);
 
     m_private->proxy_media = new MediaBindingProxy(m_private->soap);
     m_private->proxy_media->soap_endpoint = m_uri.c_str();
-
-    _trt__GetVideoSources GetVideoSources;
-    _trt__GetVideoSourcesResponse GetVideoSourcesResponse;
-    setCredentials();
-    if (m_private->proxy_media->GetVideoSources(&GetVideoSources, GetVideoSourcesResponse)){
-        reportError();
-    }
-    m_video_token = GetVideoSourcesResponse.VideoSources[0]->token;
-
-    _trt__GetVideoSourceConfigurations GetVideoSourceConfigurations;
-    _trt__GetVideoSourceConfigurationsResponse GetVideoSourceConfigurationsResponse;
-    setCredentials();
-    if (m_private->proxy_media->GetVideoSourceConfigurations(
-        &GetVideoSourceConfigurations, GetVideoSourceConfigurationsResponse)){
-        reportError();
-    }
-    m_video_conf_token = GetVideoSourceConfigurationsResponse.Configurations[0]->token;
-
-    _trt__GetVideoEncoderConfigurationOptions GetVideoEncoderConfigurationOptions;
-    GetVideoEncoderConfigurationOptions.ConfigurationToken = &m_video_conf_token;
-    setCredentials();
-    if (m_private->proxy_media->GetVideoEncoderConfigurationOptions(
-        &GetVideoEncoderConfigurationOptions, m_private->video_options)){
-        reportError();
-    }
     m_private->proxy_image = new ImagingBindingProxy(m_private->soap);
     m_private->proxy_image->soap_endpoint = m_uri.c_str();
 
-     _timg__GetOptions GetOptions;
-    GetOptions.VideoSourceToken = m_video_token;
-    _timg__GetOptionsResponse GetOptionsResponse;
+    _trt__GetVideoSources get_video_src;
+    _trt__GetVideoSourcesResponse get_video_src_resp;
+    _trt__GetVideoSourceConfigurations get_video_src_conf;
+    _trt__GetVideoSourceConfigurationsResponse get_video_src_conf_resp;
+
     setCredentials();
-    if (m_private->proxy_image->GetOptions(&GetOptions, GetOptionsResponse)){
+    bool error1 = m_private->proxy_media->GetVideoSources(&get_video_src, get_video_src_resp);
+    bool error2 = m_private->proxy_media->GetVideoSourceConfigurations(&get_video_src_conf, get_video_src_conf_resp);
+    if (error1 || error2){
         reportError();
     }
-    m_brightness[0] = GetOptionsResponse.ImagingOptions->Brightness->Min;
-    m_brightness[1] = GetOptionsResponse.ImagingOptions->Brightness->Max;
-    m_contrast[0] = GetOptionsResponse.ImagingOptions->Contrast->Min,
-    m_contrast[1] = GetOptionsResponse.ImagingOptions->Contrast->Max;
-    m_color_saturation[0] = GetOptionsResponse.ImagingOptions->ColorSaturation->Min;
-    m_color_saturation[1] = GetOptionsResponse.ImagingOptions->ColorSaturation->Max;
+
+    m_video_token = get_video_src_resp.VideoSources[0]->token;
+    m_video_conf_token = get_video_src_conf_resp.Configurations[0]->token;
+
+    _trt__GetVideoEncoderConfigurationOptions get_video_enc_conf_opt;
+    get_video_enc_conf_opt.ConfigurationToken = &m_video_conf_token;
+    _timg__GetOptions get_opt;
+    get_opt.VideoSourceToken = m_video_token;
+    _timg__GetOptionsResponse get_opt_resp;
+
+    setCredentials();
+    bool error3 = m_private->proxy_media->GetVideoEncoderConfigurationOptions(
+                            &get_video_enc_conf_opt, m_private->video_options);
+    bool error4 = m_private->proxy_image->GetOptions(&get_opt, get_opt_resp);
+    if (error3 || error4){
+        reportError();
+    }
+
+    m_brightness[0] = get_opt_resp.ImagingOptions->Brightness->Min;
+    m_brightness[1] = get_opt_resp.ImagingOptions->Brightness->Max;
+    m_contrast[0] = get_opt_resp.ImagingOptions->Contrast->Min,
+    m_contrast[1] = get_opt_resp.ImagingOptions->Contrast->Max;
+    m_color_saturation[0] = get_opt_resp.ImagingOptions->ColorSaturation->Min;
+    m_color_saturation[1] = get_opt_resp.ImagingOptions->ColorSaturation->Max;
 }
 
 ImageParam CameraOnvif::getImageParam(){
     ImageParam response = ImageParam();
-    _timg__GetImagingSettings GetImagingSettings;
-    GetImagingSettings.VideoSourceToken = m_video_token;
-    _timg__GetImagingSettingsResponse GetImagingSettingsResponse;
+    _timg__GetImagingSettings get_imaging;
+    get_imaging.VideoSourceToken = m_video_token;
+    _timg__GetImagingSettingsResponse get_imaging_resp;
     setCredentials();
-    if (m_private->proxy_image->GetImagingSettings(&GetImagingSettings, GetImagingSettingsResponse)){
+    if (m_private->proxy_image->GetImagingSettings(&get_imaging, get_imaging_resp)){
         reportError();
     }
-    response.color_saturation = *GetImagingSettingsResponse.ImagingSettings->ColorSaturation;
-    response.brightness = *GetImagingSettingsResponse.ImagingSettings->Brightness;
-    response.contrast = *GetImagingSettingsResponse.ImagingSettings->Contrast;
+    response.color_saturation = *get_imaging_resp.ImagingSettings->ColorSaturation;
+    response.brightness = *get_imaging_resp.ImagingSettings->Brightness;
+    response.contrast = *get_imaging_resp.ImagingSettings->Contrast;
 
     return response;
 }
@@ -119,16 +117,16 @@ void CameraOnvif::setImageParam(float bright, float saturation, float contrast){
                                  * saturation + m_color_saturation[0];
     float new_contrast = (m_contrast[1] - m_contrast[0]) * contrast + m_contrast[0];
 
-    _timg__SetImagingSettings SetImagingSettings;
-    SetImagingSettings.VideoSourceToken = m_video_token;
-    SetImagingSettings.ImagingSettings = new tt__ImagingSettings20();
-    SetImagingSettings.ImagingSettings->Brightness = &new_brightness;
-    SetImagingSettings.ImagingSettings->ColorSaturation = &new_color_saturation;
-    SetImagingSettings.ImagingSettings->Contrast = &new_contrast;
+    _timg__SetImagingSettings set_imaging;
+    set_imaging.VideoSourceToken = m_video_token;
+    set_imaging.ImagingSettings = new tt__ImagingSettings20();
+    set_imaging.ImagingSettings->Brightness = &new_brightness;
+    set_imaging.ImagingSettings->ColorSaturation = &new_color_saturation;
+    set_imaging.ImagingSettings->Contrast = &new_contrast;
 
-    _timg__SetImagingSettingsResponse SetImagingSettingsResponse;
+    _timg__SetImagingSettingsResponse set_imaging_resp;
     setCredentials();
-    if (m_private->proxy_image->SetImagingSettings(&SetImagingSettings, SetImagingSettingsResponse)) {
+    if (m_private->proxy_image->SetImagingSettings(&set_imaging, set_imaging_resp)) {
         reportError();
     }
 }
@@ -154,8 +152,7 @@ void CameraOnvif::setResolution(int width, int height){
     conf_set.Configuration->Resolution->Width = width;
     conf_set.Configuration->Resolution->Height = height;
     setCredentials();
-    if (m_private->proxy_media->SetVideoEncoderConfiguration(&conf_set,
-        conf_set_response)){
+    if (m_private->proxy_media->SetVideoEncoderConfiguration(&conf_set, conf_set_response)){
         reportError();
     }
 }
@@ -189,6 +186,9 @@ int CameraOnvif::getTimeout(){
 
 void CameraOnvif::setTimeout(int timeout){
     m_timeout = timeout;
+    m_private->soap->connect_timeout = m_timeout;
+    m_private->soap->recv_timeout = m_timeout;
+    m_private->soap->send_timeout = m_timeout;
 }
 
 void CameraOnvif::reportError(){
@@ -217,8 +217,9 @@ void CameraOnvif::printCameraInfo(){
     _tds__GetDeviceInformation GetDeviceInformation;
     _tds__GetDeviceInformationResponse GetDeviceInformationResponse;
     setCredentials();
-    if (proxyDevice.GetDeviceInformation(&GetDeviceInformation, GetDeviceInformationResponse))
+    if (proxyDevice.GetDeviceInformation(&GetDeviceInformation, GetDeviceInformationResponse)){
         reportError();
+    }
     cout << "\n------------- Camera Information -------------" << endl;
     cout << "Manufacturer:    " << GetDeviceInformationResponse.Manufacturer << endl;
     cout << "Model:           " << GetDeviceInformationResponse.Model << endl;
@@ -283,7 +284,7 @@ int SOAP_ENV__Fault(struct soap *soap, char *faultcode, char *faultstring, char 
 
 /******************************************************************************\
  *
- *	OpenSSL
+ *    OpenSSL
  *
 \******************************************************************************/
 
@@ -369,4 +370,3 @@ void CRYPTO_thread_cleanup()
 { }
 
 #endif
-

@@ -27,12 +27,12 @@ list(APPEND gsoap_GEN
 rock_library(camera_onvif
     SOURCES CameraOnvif.cpp ${gsoap_GEN} ${gsoap_PLUGINS_SOURCES}
     HEADERS CameraOnvif.hpp
-    DEPS_PKGCONFIG gsoap gsoap++ gsoapssl libssl libcrypto)
+    DEPS_PKGCONFIG gsoap gsoap++ gsoapssl libssl libcrypto base-types)
 
 rock_executable(camera_onvif_bin Main.cpp CameraOnvif.cpp
     ${gsoap_GEN}
     ${gsoap_PLUGINS_SOURCES}
-    DEPS_PKGCONFIG gsoap gsoap++ gsoapssl libssl libcrypto)
+    DEPS_PKGCONFIG gsoap gsoap++ gsoapssl libssl libcrypto base-types)
 
 set_source_files_properties(${gsoap_PLUGINS_SOURCES} PROPERTIES LANGUAGE CXX)
 

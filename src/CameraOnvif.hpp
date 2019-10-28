@@ -1,6 +1,8 @@
 #ifndef CAMERA_ONVIF_CAMERAONVIF_HPP
 #define CAMERA_ONVIF_CAMERAONVIF_HPP
 
+#include <base/Time.hpp>
+
 #include <string>
 
 class _trt__GetVideoEncoderConfigurationResponse;
@@ -35,7 +37,7 @@ namespace camera_onvif {
         std::string m_video_token;
         std::string m_video_conf_token;
 
-        int m_timeout;
+        base::Time m_timeout;
 
         //[Min, Max]
         float m_brightness[2];
@@ -70,9 +72,9 @@ namespace camera_onvif {
         Resolution getResolution();
 
         // Get timeout: Returns an integer with the connection authentication timeout.
-        int getTimeout ();
+        base::Time getTimeout ();
         // Set timeout: Set an integer with the connection authentication timeout.
-        void setTimeout (int timeout);
+        void setTimeout (base::Time timeout);
     };
 }
 

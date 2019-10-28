@@ -16,6 +16,7 @@
 
 using namespace std;
 using namespace camera_onvif;
+using namespace base;
 
 struct CameraOnvif::Private {
     struct soap *soap = soap_new1(SOAP_XML_STRICT | SOAP_XML_CANONICAL | SOAP_C_UTFSTRING);
@@ -34,16 +35,15 @@ struct CameraOnvif::Private {
 };
 
 CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& ip) :
- m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service"), m_timeout(10) {
+ m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service"),
+  m_timeout(Time::fromSeconds(10)) {
 
     this->init();
 }
 
 void CameraOnvif::init(){
     m_private = new Private();
-    m_private->soap->connect_timeout = m_timeout;
-    m_private->soap->recv_timeout = m_timeout;
-    m_private->soap->send_timeout = m_timeout;
+    setTimeout(m_timeout);
     soap_register_plugin(m_private->soap, soap_wsse);
 
     m_private->proxy_media = new MediaBindingProxy(m_private->soap);
@@ -177,15 +177,15 @@ camera_onvif::Resolution CameraOnvif::getResolution(){
     return response;
 }
 
-int CameraOnvif::getTimeout(){
+Time CameraOnvif::getTimeout(){
     return m_timeout;
 }
 
-void CameraOnvif::setTimeout(int timeout){
+void CameraOnvif::setTimeout(Time timeout){
     m_timeout = timeout;
-    m_private->soap->connect_timeout = m_timeout;
-    m_private->soap->recv_timeout = m_timeout;
-    m_private->soap->send_timeout = m_timeout;
+    m_private->soap->connect_timeout = m_timeout.toMilliseconds()/1000;
+    m_private->soap->recv_timeout = m_timeout.toMilliseconds()/1000;
+    m_private->soap->send_timeout = m_timeout.toMilliseconds()/1000;
 }
 
 void CameraOnvif::reportError(){
@@ -197,7 +197,7 @@ void CameraOnvif::reportError(){
 
 void CameraOnvif::setCredentials(){
     soap_wsse_delete_Security(m_private->soap);
-    bool error1 = soap_wsse_add_Timestamp(m_private->soap, "Time", m_timeout);
+    bool error1 = soap_wsse_add_Timestamp(m_private->soap, "Time", m_timeout.toSeconds());
     bool error2 = soap_wsse_add_UsernameTokenDigest(
                     m_private->soap, "Auth", m_user.c_str(), m_pass.c_str());
     if ( error1 || error2) {

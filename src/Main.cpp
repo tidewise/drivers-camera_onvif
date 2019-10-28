@@ -5,9 +5,9 @@
 int main()
 {
     camera_onvif::CameraOnvif camera = camera_onvif::CameraOnvif(
-        "admin", "camera01", "10.20.0.188");
+        "admin", "camera01", "10.20.0.187");
 
-    camera.setResolution(1920, 1080);
+    camera.setResolution(1280, 720);
 
     auto params = camera_onvif::ImageParam();
 

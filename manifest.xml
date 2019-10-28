@@ -7,14 +7,5 @@
   <url>http://gitlab.com/henriquejsfj</url>
   <logo>http://</logo>
   <depend package="base/cmake" />
-  <!--
-   To add any dependencies use the depend tag
-  <depend package="dummy-dependency-0" />
-	...
-  <depend package="dummy-dependency-n-1" />
-  <depend package="dummy-dependency-n" />
-  -->
-  <!-- <depend package="lcrypto" />
-  <depend package="lssl" />
-  <depend package="lz" /> -->
+  <depend package="base/types" />
 </package>

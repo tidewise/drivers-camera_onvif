@@ -24,14 +24,8 @@ struct CameraOnvif::Private {
     _trt__GetVideoEncoderConfigurationOptionsResponse video_options;
     Private() = default;
     ~Private(){
-        /*
-         * Free all deserialized and managed data, we can still reuse the context
-         * and proxies after this.
-         */
         soap_destroy(soap);
         soap_end(soap);
-
-        // free the shared context, proxy classes must terminate as well after this
         soap_free(soap);
 
         delete proxy_image;

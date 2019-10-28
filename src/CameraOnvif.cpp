@@ -197,7 +197,7 @@ void CameraOnvif::reportError(){
 
 void CameraOnvif::setCredentials(){
     soap_wsse_delete_Security(m_private->soap);
-    bool error1 = soap_wsse_add_Timestamp(m_private->soap, "Time", 10);
+    bool error1 = soap_wsse_add_Timestamp(m_private->soap, "Time", m_timeout);
     bool error2 = soap_wsse_add_UsernameTokenDigest(
                     m_private->soap, "Auth", m_user.c_str(), m_pass.c_str());
     if ( error1 || error2) {

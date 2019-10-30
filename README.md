@@ -14,10 +14,7 @@ To refresh the code generation, run **from the root of the package**
 ./scripts/onvif-h2cpp src/onvif/
 ~~~
 
-For security reasons we set a 10 seconds timeout in connection. So, before any
-ONVIF communication with the camera you have to use `setCredentials()` private
-function to authenticate the connection and then after 10 seconds we shoud call
-the function again to use ONVIF. This is better explained at [this tutorial](https://www.genivia.com/examples/onvif/index.html#Using_WS-Security).
+For security reasons we set a 10 seconds timeout in connection.
 
 License
 -------

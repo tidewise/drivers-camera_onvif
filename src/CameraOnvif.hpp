@@ -46,6 +46,10 @@ namespace camera_onvif {
         //[Min, Max]
         float m_contrast[2];
 
+        /*
+         * Function to authenticate the connection and then after 10 seconds we shoud call
+         * the function again to use ONVIF.
+         */
         void setCredentials();
         // to report an error
         void reportError();

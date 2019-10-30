@@ -34,9 +34,9 @@ struct CameraOnvif::Private {
     }
 };
 
-CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& ip) :
- m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service"),
-  m_timeout(Time::fromSeconds(10)) {
+CameraOnvif::CameraOnvif(const string& user, const string& pass, const string& ip)
+    : m_user(user), m_pass(pass), m_uri("http://" + ip + "/onvif/device_service")
+    , m_timeout(Time::fromSeconds(10)) {
 
     this->init();
 }
@@ -171,7 +171,7 @@ void CameraOnvif::getVideoEncoderConfiguration(
 camera_onvif::Resolution CameraOnvif::getResolution(){
     _trt__GetVideoEncoderConfigurationResponse video_conf;
     getVideoEncoderConfiguration(video_conf);
-    Resolution response = Resolution();
+    Resolution response;
     response.width = video_conf.Configuration->Resolution->Width;
     response.height = video_conf.Configuration->Resolution->Height;
     return response;

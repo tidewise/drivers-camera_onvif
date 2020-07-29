@@ -1,12 +1,14 @@
 #! /bin/sh -e
 
-target_dir=$1
-if test -z "$1"; then
-    echo "usage: onvif-wsdl2h target_dir"
+if test -z "$1" || ! test -f "$2"; then
+    echo "usage: onvif-wsdl2h target_dir onvif.h"
     exit 1
 fi
 
+target_dir=$1
+onvif_h=$2
+
 cd $target_dir
 gsoap_prefix=`pkg-config --variable=prefix gsoap`
-soapcpp2 -2 -C -I "$gsoap_prefix/share/gsoap" -j -x onvif.h
+soapcpp2 -2 -C -I "$gsoap_prefix/share/gsoap" -j -x "$onvif_h"
 soapcpp2 -a -x -L -pwsdd -I "$gsoap_prefix/share/gsoap" "$gsoap_prefix/share/gsoap/import/wsdd5.h"

@@ -3,12 +3,12 @@
 
 #include <gsoap/plugin/wsseapi.h>
 #include <gsoap/plugin/wsddapi.h>
-#include "onvif/soapDeviceBindingProxy.h"
-#include "onvif/soapImagingBindingProxy.h"
-#include "onvif/soapMediaBindingProxy.h"
-#include "onvif/soapPTZBindingProxy.h"
-#include "onvif/soapPullPointSubscriptionBindingProxy.h"
-#include "onvif/soapRemoteDiscoveryBindingProxy.h"
+#include "soapDeviceBindingProxy.h"
+#include "soapImagingBindingProxy.h"
+#include "soapMediaBindingProxy.h"
+#include "soapPTZBindingProxy.h"
+#include "soapPullPointSubscriptionBindingProxy.h"
+#include "soapRemoteDiscoveryBindingProxy.h"
 #include "wsdd.nsmap"
 
 #include <iostream>
